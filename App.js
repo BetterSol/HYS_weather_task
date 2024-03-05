@@ -8,6 +8,8 @@ import {
   Switch, 
   ImageBackground,
   TouchableOpacity,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 
 const API_KEY = 'a7d88b73aded8bb39c3d3c12f382758c';
@@ -62,68 +64,78 @@ export default function WeatherApp() {
       }
     }
 
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
+  }
+
   return (
-    <View style={styles.container}>
+      <View style={styles.container}>
 
-      <ImageBackground source={backgroundImage} resizeMode="cover" style={styles.backgroundImage}>
-        <View style={styles.switchContainer}>
-          <Text style={styles.buttonText}>C</Text>
-          <Switch
-            trackColor={{false: '#767577', true: '#8BABB0'}}
-            value={units === 'imperial'}
-            onValueChange={() => setUnits(units === 'metric' ? 'imperial' : 'metric')}
-          />
-          <Text style={styles.buttonText}>F</Text>
-        </View>
-
-        <TouchableOpacity
-          onPress={ fetchWeatherData }
-          style={styles.button}
-        >
-          <Text style={styles.buttonText}>Get Weather in the City</Text>
-        </TouchableOpacity>
-
-        <TextInput
-          style={styles.inputContainer}
-          placeholder="Enter your city"
-          value={city}
-          onChangeText={city => setCity(city)}
-          />
-
-        {weather && (
-          <View style={styles.weatherContainer}>
-            <View style={styles.weatherBackground}/>
-            <View style={styles.weatherText}>
-              <Text style={styles.text}>City: {weather.name}</Text>
-              <Text style={styles.text}>Temperature: {weather.main.temp}°{units === 'metric' ? 'C' : 'F'}</Text>
-              <Text style={styles.text}>Sky: {weather.weather[0].description}</Text>
-              <Text style={styles.text}>Humidity: {weather.main.humidity}%</Text>
-            </View>
+        <ImageBackground source={backgroundImage} resizeMode="cover" style={styles.backgroundImage}>
+          <View style={styles.switchContainer}>
+            <Text style={styles.buttonText}>C</Text>
+            <Switch
+              trackColor={{false: '#767577', true: '#8BABB0'}}
+              value={units === 'imperial'}
+              onValueChange={() => setUnits(units === 'metric' ? 'imperial' : 'metric')}
+            />
+            <Text style={styles.buttonText}>F</Text>
           </View>
-        )}
 
-        <TouchableOpacity
-          onPress={fetchWeatherForecast}
-          style={styles.button}
-        >
-          <Text style={styles.buttonText}>Get 5-day forecast</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              fetchWeatherData();
+              dismissKeyboard();
+            }}
+            style={styles.button}
+          >
+            <Text style={styles.buttonText}>Get Weather in the City</Text>
+          </TouchableOpacity>
 
-        {forecast && (
-          <FlatList
-            style={styles.forecastContainer}
-            data={forecast}
-            renderItem={({ item }) => (
-              <View style={styles.dayForecastContainer}>
-                <Text>{item.dt_txt}</Text>
-                <Text>{item.main.temp}°{units === 'metric' ? 'C' : 'F'}</Text>
-                <Text>Sky: {item.weather[0].description}</Text>
+          <TextInput
+            style={styles.inputContainer}
+            placeholder="Enter your city"
+            value={city}
+            onChangeText={city => setCity(city)}
+            />
+
+          {weather && (
+            <View style={styles.weatherContainer}>
+              <View style={styles.weatherBackground}/>
+              <View style={styles.weatherText}>
+                <Text style={styles.text}>City: {weather.name}</Text>
+                <Text style={styles.text}>Temperature: {weather.main.temp}°{units === 'metric' ? 'C' : 'F'}</Text>
+                <Text style={styles.text}>Sky: {weather.weather[0].description}</Text>
+                <Text style={styles.text}>Humidity: {weather.main.humidity}%</Text>
               </View>
-            )}
-          />
-        )}
-      </ImageBackground>
-    </View>
+            </View>
+          )}
+
+          <TouchableOpacity
+            onPress={() => {
+              fetchWeatherForecast();
+              dismissKeyboard();
+            }}
+            style={styles.button}
+          >
+            <Text style={styles.buttonText}>Get 5-day forecast</Text>
+          </TouchableOpacity>
+
+          {forecast && (
+            <FlatList
+              style={styles.forecastContainer}
+              data={forecast}
+              renderItem={({ item }) => (
+                <View style={styles.dayForecastContainer}>
+                  <Text>{item.dt_txt}</Text>
+                  <Text>{item.main.temp}°{units === 'metric' ? 'C' : 'F'}</Text>
+                  <Text>Sky: {item.weather[0].description}</Text>
+                </View>
+              )}
+            />
+          )}
+        </ImageBackground>
+      </View>  
   );
 }
 
