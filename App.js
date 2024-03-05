@@ -9,28 +9,24 @@ import {
   ImageBackground,
   TouchableOpacity,
   Keyboard,
-  TouchableWithoutFeedback,
 } from 'react-native';
 
 const API_KEY = 'a7d88b73aded8bb39c3d3c12f382758c';
 const backgroundImage = {url: 'https://images.unsplash.com/photo-1530908295418-a12e326966ba?q=80&w=2187&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'};
 
-// const STYLES = ['default', 'dark-content', 'light-content'];
-// const TRANSITIONS = ['fade', 'slide', 'none'];
-
 export default function WeatherApp() {
   const [city, setCity] = useState('');
   const [weather, setWeather] = useState(null);
   const [forecast, setForecast] = useState([]);
-  // const [enteredCities, setEnteredCities] = useState([]);
   const [units, setUnits] = useState('metric');
-
+  const [, setErrorMessage] = useState('');
+  
   useEffect(() => {
     if (city) {
       if (weather !== null) {
         fetchWeatherData();
       }
-      if (forecast.length > 1) {
+      if (forecast.length) {
         fetchWeatherForecast();
       }
     }
@@ -41,11 +37,19 @@ export default function WeatherApp() {
       const response = await fetch(
         `http://api.openweathermap.org/data/2.5/weather?q=${city}&units=${units}&APPID=${API_KEY}`
       );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
+      }
+
       const data = await response.json();
       setWeather(data);
+      setErrorMessage('');
 
     } catch (error) {
-      console.error('error', error);
+      setWeather(null);
+      setErrorMessage('Something went wrong', error);
+      alert("Hmm, we can't find a city with such name", error);
     }
   };
 
@@ -55,12 +59,17 @@ export default function WeatherApp() {
         `http://api.openweathermap.org/data/2.5/forecast?q=${city}&units=${units}&APPID=${API_KEY}`
         );
         
+        if (!response.ok) {
+          throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
+        }
+
         const data = await response.json();
         setForecast(data.list);
-        console.log(forecast);
 
       } catch (error) {
-        console.error('error', error);
+        setForecast([]);
+        setErrorMessage('Something went wrong', error);
+        alert('You might want to check your city name again', error);
       }
     }
 
@@ -71,7 +80,11 @@ export default function WeatherApp() {
   return (
       <View style={styles.container}>
 
-        <ImageBackground source={backgroundImage} resizeMode="cover" style={styles.backgroundImage}>
+        <ImageBackground 
+          source={backgroundImage} 
+          resizeMode="cover" 
+          style={styles.backgroundImage}
+        >
           <View style={styles.switchContainer}>
             <Text style={styles.buttonText}>C</Text>
             <Switch
@@ -83,11 +96,14 @@ export default function WeatherApp() {
           </View>
 
           <TouchableOpacity
+            style={styles.button}
             onPress={() => {
               fetchWeatherData();
               dismissKeyboard();
+              if (weather !== null) {
+                fetchWeatherForecast();
+              }
             }}
-            style={styles.button}
           >
             <Text style={styles.buttonText}>Get Weather in the City</Text>
           </TouchableOpacity>
@@ -115,6 +131,9 @@ export default function WeatherApp() {
             onPress={() => {
               fetchWeatherForecast();
               dismissKeyboard();
+              if (weather !== null) {
+                fetchWeatherData();
+              }
             }}
             style={styles.button}
           >
@@ -142,17 +161,16 @@ export default function WeatherApp() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // backgroundColor: '#000000c0',
   },
   inputContainer: {
+    width: '60%',
+    margin: 10,
+    padding: 10,
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 5,
     backgroundColor: '#fff',
     opacity: 0.7,
-    padding: 10,
-    marginBottom: 10,
-    width: '60%',
   },
   weatherContainer: {
     position: 'relative',
@@ -191,15 +209,26 @@ const styles = StyleSheet.create({
   },
   switchContainer: {
     right: -65,
+    margin: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 10,
     gap: 10,
+  },
+  dropdown: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    right: 20,
+    backgroundColor: '#fff',
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#ccc',
   },
   item: {
     padding: 10,
     fontSize: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
   },
 
   backgroundImage: {
@@ -211,8 +240,8 @@ const styles = StyleSheet.create({
     borderColor: '#000000c0',
   },
   button: {
-    padding: 12,
     marginBottom: 5,
+    padding: 12,
     borderRadius: 5,
     backgroundColor: '#8BABB0',
     opacity: 0.8,
@@ -224,5 +253,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#fff',
   }
-
 });
