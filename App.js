@@ -5,7 +5,8 @@ import {
   Text, 
   TextInput, 
   FlatList, 
-  Switch, 
+  Switch,
+  Image, 
   ImageBackground,
   TouchableOpacity,
   Keyboard,
@@ -23,12 +24,14 @@ export default function WeatherApp() {
   
   useEffect(() => {
     if (city) {
-      if (weather !== null) {
-        fetchWeatherData();
-      }
-      if (forecast.length) {
-        fetchWeatherForecast();
-      }
+      fetchWeatherData();
+      fetchWeatherForecast();
+      // if (weather !== null) {
+      //   fetchWeatherData();
+      // }
+      // if (forecast.length) {
+      //   fetchWeatherForecast();
+      // }
     }
   }, [units]);
 
@@ -77,9 +80,38 @@ export default function WeatherApp() {
     Keyboard.dismiss();
   }
 
+  const formatDateTime = (dateTimeString) => {
+    const date = new Date(dateTimeString);
+    const month = date.toLocaleString('default', { month: 'short' });
+    const day = date.getDate();
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const formattedDate = `${month} ${day}, ${hours}:${minutes.toString().padStart(2, '0')}`;
+    return formattedDate;
+  };
+
+  const toggleUnits = () => {
+    setUnits(units === 'metric' ? 'imperial' : 'metric');
+  };
+
+  const handleGetWeather = () => {
+    fetchWeatherData();
+    dismissKeyboard();
+    if (weather !== null) {
+      fetchWeatherForecast();
+    }
+  };
+
+  const handleGetForecast = () => {
+      fetchWeatherForecast();
+      dismissKeyboard();
+      if (weather !== null) {
+        fetchWeatherData();
+      }
+  };
+
   return (
       <View style={styles.container}>
-
         <ImageBackground 
           source={backgroundImage} 
           resizeMode="cover" 
@@ -90,20 +122,14 @@ export default function WeatherApp() {
             <Switch
               trackColor={{false: '#767577', true: '#8BABB0'}}
               value={units === 'imperial'}
-              onValueChange={() => setUnits(units === 'metric' ? 'imperial' : 'metric')}
+              onValueChange={toggleUnits}
             />
             <Text style={styles.buttonText}>F</Text>
           </View>
 
           <TouchableOpacity
             style={styles.button}
-            onPress={() => {
-              fetchWeatherData();
-              dismissKeyboard();
-              if (weather !== null) {
-                fetchWeatherForecast();
-              }
-            }}
+            onPress={handleGetWeather}
           >
             <Text style={styles.buttonText}>Get Weather in the City</Text>
           </TouchableOpacity>
@@ -112,7 +138,7 @@ export default function WeatherApp() {
             style={styles.inputContainer}
             placeholder="Enter your city"
             value={city}
-            onChangeText={city => setCity(city)}
+            onChangeText={setCity}
             />
 
           {weather && (
@@ -120,7 +146,11 @@ export default function WeatherApp() {
               <View style={styles.weatherBackground}/>
               <View style={styles.weatherText}>
                 <Text style={styles.text}>City: {weather.name}</Text>
-                <Text style={styles.text}>Temperature: {weather.main.temp}°{units === 'metric' ? 'C' : 'F'}</Text>
+                <Text style={styles.text}>Temperature: {Math.ceil(weather.main.temp)}°{units === 'metric' ? 'C' : 'F'}</Text>
+                <Image
+                    style={{ width: 30, height: 30 }}
+                    source={{ uri: `http://openweathermap.org/img/w/${weather.weather[0].icon}.png` }}
+                  />
                 <Text style={styles.text}>Sky: {weather.weather[0].description}</Text>
                 <Text style={styles.text}>Humidity: {weather.main.humidity}%</Text>
               </View>
@@ -128,13 +158,7 @@ export default function WeatherApp() {
           )}
 
           <TouchableOpacity
-            onPress={() => {
-              fetchWeatherForecast();
-              dismissKeyboard();
-              if (weather !== null) {
-                fetchWeatherData();
-              }
-            }}
+            onPress={handleGetForecast}
             style={styles.button}
           >
             <Text style={styles.buttonText}>Get 5-day forecast</Text>
@@ -146,9 +170,14 @@ export default function WeatherApp() {
               data={forecast}
               renderItem={({ item }) => (
                 <View style={styles.dayForecastContainer}>
-                  <Text>{item.dt_txt}</Text>
-                  <Text>{item.main.temp}°{units === 'metric' ? 'C' : 'F'}</Text>
-                  <Text>Sky: {item.weather[0].description}</Text>
+                  <View style={styles.weatherBackground}/>
+                  <Text>{formatDateTime(item.dt_txt)}</Text>
+                  <Text>{Math.ceil(item.main.temp)}°{units === 'metric' ? 'C' : 'F'}</Text>
+                  <Image
+                    style={{ width: 30, height: 30 }}
+                    source={{ uri: `http://openweathermap.org/img/w/${item.weather[0].icon}.png` }}
+                  />
+                  <Text style={styles.forecastDescription}>{item.weather[0].description}</Text>
                 </View>
               )}
             />
